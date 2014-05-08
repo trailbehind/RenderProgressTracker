@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+PARENT_DIR = os.path.dirname(BASE_DIR)
 
 SECRET_KEY = 'tmen^6qgwn@ci0-(^=k#t2zqp0t79!5eotnx_rz0s5+^m3g$@m'
 
@@ -88,3 +89,84 @@ try:
     from RenderProgressTracker.local_settings import *
 except Exception, e:
     print(str(e))
+
+#import per-app settings to override defaults, before setting up logging
+#to override log dir
+LOG_DIR = os.path.join(os.path.dirname(PARENT_DIR), 'logs')
+
+try:
+    from easyTileServer.local_settings import *
+except Exception, e:
+    print(str(e))
+
+if not os.path.exists(LOG_DIR):
+    os.mkdir(LOG_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+        'no_name': {
+            'format': '%(asctime)s [%(levelname)s]: %(message)s'
+        }
+    },
+    'handlers': {
+        'default': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'django.log'),
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
+            'formatter':'standard',
+        },
+        'request_handler': {
+                'level':'DEBUG',
+                'class':'logging.handlers.RotatingFileHandler',
+                'filename': os.path.join(LOG_DIR, 'django_request.log'),
+                'maxBytes': 1024*1024*5, # 5 MB
+                'backupCount': 5,
+                'formatter':'no_name',
+        },
+        'database': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'django_db.log'),
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
+            'formatter':'no_name',
+        },
+        'mail_admins': {
+            'level':'ERROR',
+            'class':'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        },
+        'error_log': {
+            'level':'ERROR',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'django_error.log'),
+            'maxBytes': 1024*1024*5,
+            'backupCount': 5,
+            'formatter': 'standard',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['default', 'mail_admins', 'error_log'],
+            'level': 'DEBUG',
+            'propagate': True
+        },
+        'django.request': {
+            'handlers': ['request_handler', 'mail_admins', 'error_log'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+        'django.db.backends': {
+            'handlers': ['database', 'mail_admins', 'error_log'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    }
+}
