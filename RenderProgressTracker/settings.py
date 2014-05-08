@@ -83,3 +83,8 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
+
+try:
+    from RenderProgressTracker.local_settings import *
+except Exception, e:
+    print(str(e))
