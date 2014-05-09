@@ -7,10 +7,11 @@ class Dataset(models.Model):
     identifier = models.CharField(max_length=50, unique=True, primary_key=True, db_index=True)
 
     objects = models.GeoManager()
-
+    def __unicode__(self):
+        return self.name
 
 PROGRESS_CHOICES = (
-    ('running', 'running'),
+    ('running', 'Running'),
     ('complete', 'Complete'),
     ('failed', 'Failed'),
 )
