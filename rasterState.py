@@ -53,11 +53,15 @@ def rounded_extent(source_file, options):
 if __name__=='__main__':
     usage = "usage: %prog "
     parser = OptionParser(usage=usage,
-        description="")
+        description="Update or query status for a raster")
     parser.add_option("-d", "--debug", action="store_true", dest="debug")
     parser.add_option("-q", "--quiet", action="store_true", dest="quiet")
-    parser.add_option("-s", "--state", action="store", dest="state")
-    parser.add_option("-l", "--layer", action="store", dest="layer")
+    parser.add_option("-s", "--state", action="store", dest="state", 
+        help="Set state, one of running, complete, failed")
+    parser.add_option("-l", "--layer", action="store", dest="layer", 
+        help="Layer name")
+    parser.add_option("-c",  "--check", action="store_true", dest="check", 
+        help="Check staus of block. if --state is specified check if state matches, else check if block exists.")
 
     (options, args) = parser.parse_args()
     
@@ -67,11 +71,10 @@ if __name__=='__main__':
     if not options.layer:
         logging.error("layer option required")
         sys.exit(0)
-
-    if not options.state:
-        logging.error("state option required")
-        sys.exit(0)
     
+    if not options.state and not options.check:
+        logging.error("no set or check option specified, nothing to do")
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "RenderProgressTracker.settings")
     #django.setup() for 1.7
     from django.conf import settings
@@ -82,15 +85,33 @@ if __name__=='__main__':
 
     for path in args:
         if not os.path.exists(path):
-            print path + " not found"
+            logging.error(path + " not found")
             continue
         extent = rounded_extent(path, options)
         identifier = "_".join([str(i) for i in extent])
         source_name = os.path.basename(path)
-        block, created = RenderBlock.objects.get_or_create(identifier=identifier, 
-            dataset=dataset, source=source_name)
-        if created:
-            block.bounds = Polygon.from_bbox(extent)
+        if options.check:
+            block = RenderBlock.objects.filter(identifier=identifier, dataset=dataset).first()
+            if block:
+                logging.info("block exists")
+                if options.state:
+                    if block.state == options.state:
+                        logging.debug("State matches")
+                        sys.exit(0)
+                    else:
+                        logging.debug("State does not match")
+                        sys.exit(-1)
+                else:
+                    sys.exit(0)
+            else:
+                logging.info("block does not exist")
+                sys.exit(-1)
+        else:
+            if options.state:
+                block, created = RenderBlock.objects.get_or_create(identifier=identifier, 
+                    dataset=dataset, source=source_name)
+                if created:
+                    block.bounds = Polygon.from_bbox(extent)
         
-        block.state = options.state
-        block.save()
+                block.state = options.state
+                block.save()

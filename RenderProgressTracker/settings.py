@@ -92,7 +92,7 @@ LOG_DIR = os.path.join(PARENT_DIR, 'django-logs')
 try:
     from RenderProgressTracker.local_settings import *
 except Exception, e:
-    print(str(e))
+    pass
 
 
 if not os.path.exists(LOG_DIR):
