@@ -30,7 +30,7 @@
 
   geojson = null;
   function loadBlocks() {
-    $.getJSON("/blocks/.json", function(data) {
+    $.getJSON("/api/blocks/.json", function(data) {
       if(geojson != null) {
         map.removeLayer(geojson);
       }

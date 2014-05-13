@@ -7,12 +7,11 @@ from RenderProgress.views import RenderBlockViewSet, RenderBlockMap
 
 from rest_framework.routers import DefaultRouter
 
+router = DefaultRouter()
+router.register(r'blocks', RenderBlockViewSet)
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^map/', RenderBlockMap.as_view())
+    url(r'^$', RenderBlockMap.as_view()),
+    url(r'^api/', include(router.urls)),
 )
-
-router = DefaultRouter()
-router.register(r'blocks', RenderBlockViewSet)
-urlpatterns += router.urls
