@@ -109,8 +109,9 @@ if __name__=='__main__':
         else:
             if options.state:
                 block, created = RenderBlock.objects.get_or_create(identifier=identifier, 
-                    dataset=dataset, source=source_name)
+                    dataset=dataset)
                 if created:
+                    block.source = source_name
                     block.bounds = Polygon.from_bbox(extent)
         
                 block.state = options.state
